@@ -36,11 +36,17 @@ public class HypnoMoire extends Applet implements Runnable {
     private Color bg;
     private String href;
     private URL href_url;
-    private boolean initialized = false;
+    private static final boolean debugging = false;
 
     private void status(String s) {
         showStatus(s);
-        System.out.println(s);
+	if (debugging)
+	    System.out.println(s);
+    }
+    
+    private void debug(String s) {
+	if (debugging)
+	    System.out.println(s);
     }
     
     private double get_double_parm(String name, double iv) {
@@ -56,10 +62,15 @@ public class HypnoMoire extends Applet implements Runnable {
         return parm.doubleValue();
     }
     
-    public void init() {
+    public synchronized void init() {
+	debug("Initializing");
         lag = get_double_parm("lag", 0.3);
         jump = get_double_parm("jump", 0.05);
-        frame_rate = get_double_parm("frame_rate", 10.0);
+        frame_rate = get_double_parm("frame_rate", 5.0);
+	if (frame_rate > 100.0)
+	    frame_rate = 100.0;
+	if (frame_rate < 0.1)
+	    frame_rate = 0.1;
         href = getParameter("href");
         if (href != null)
             try {
@@ -79,7 +90,11 @@ public class HypnoMoire extends Applet implements Runnable {
 	bg = new Color(0,0,0);
         buffer = createImage(d.width, d.height);
         bitmap = buffer.getGraphics();
-	initialized = true;
+	debug("In thread " + Thread.currentThread());
+	motor = new Thread(this, "motor");
+	motor.setPriority(Thread.MAX_PRIORITY);
+	debug("Created " + motor);
+	debug("Initialized");
     }
 
     private static int round(double d) {
@@ -111,10 +126,12 @@ public class HypnoMoire extends Applet implements Runnable {
     }
 
     public void paint(Graphics g) {
+	debug("Painting");
         g.drawImage(buffer, 0, 0, null);
     }
 
     public void update(Graphics g) {
+	debug("Updating");
         do_line(theta, bg);
         do_line(theta + lag, fg);
         paint(g);
@@ -123,25 +140,31 @@ public class HypnoMoire extends Applet implements Runnable {
 	    theta -= 2 * Math.PI;
     }
     
-    public void start() {
-        motor = new Thread(this);
-        motor.setPriority(Thread.MIN_PRIORITY);
-        motor.start();
+    public synchronized void start() {
+	debug("Starting");
+	debug("In thread " + Thread.currentThread());
+	motor.start();
     }
-
-    public void stop() {
-        motor.stop();
+    
+    public synchronized void stop() {
+	debug("Stopping");
+	debug("In thread " + Thread.currentThread());
+	motor.stop();
     }
-
+    
     public void run() {
+	debug("Running");
         while (true) {
-            try {
-                motor.sleep(round(1000.0 / frame_rate), 0);
-            } catch (InterruptedException e) {
-                status("interrupted");
-            }
-	    if (initialized)
-                repaint();
+	    Thread me = Thread.currentThread();
+	    debug("In thread " + me);
+	    debug("Sleeping");
+	    try {
+		me.sleep(round(1000.0/frame_rate));
+	    } catch (InterruptedException e) {
+		status("Interrupted");
+	    }
+	    debug("Repainting");
+	    repaint();
         }
     }
 }

@@ -18,7 +18,7 @@ import java.net.*;
  *	Patrick Naughton
  *	McGraw Hill 1996
  *	ISBN 0-07-882199-1
- * @version 1.0
+ * @version 1.1
  */
 public class HypnoMoire extends Applet implements Runnable {
     private Dimension d;
@@ -91,9 +91,6 @@ public class HypnoMoire extends Applet implements Runnable {
         buffer = createImage(d.width, d.height);
         bitmap = buffer.getGraphics();
 	debug("In thread " + Thread.currentThread());
-	motor = new Thread(this, "motor");
-	motor.setPriority(Thread.MAX_PRIORITY);
-	debug("Created " + motor);
 	debug("Initialized");
     }
 
@@ -143,6 +140,9 @@ public class HypnoMoire extends Applet implements Runnable {
     public synchronized void start() {
 	debug("Starting");
 	debug("In thread " + Thread.currentThread());
+	motor = new Thread(this, "motor");
+	motor.setPriority(Thread.MAX_PRIORITY);
+	debug("Created " + motor);
 	motor.start();
     }
     

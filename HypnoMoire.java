@@ -74,22 +74,14 @@ public class HypnoMoire extends Applet implements Runnable {
         href = getParameter("href");
         if (href != null)
             try {
-                URL base = getDocumentBase();
-                href_url = new URL(base, href);
+                href_url = new URL(href);
 		href = href_url.toString();
             } catch (MalformedURLException ex) {
                 status("HREF URL format error");
                 href = null;
             }
-        d = this.size();
-        int ss = d.width * d.width + d.height * d.height;
-        r = Math.sqrt(ss) + 1.0;
-        xo = d.width / 2;
-        yo = d.height / 2;
 	fg = new Color(255,255,255);
 	bg = new Color(0,0,0);
-        buffer = createImage(d.width, d.height);
-        bitmap = buffer.getGraphics();
 	debug("In thread " + Thread.currentThread());
 	debug("Initialized");
     }
@@ -122,13 +114,31 @@ public class HypnoMoire extends Applet implements Runnable {
         return super.mouseEnter(e, x, y);
     }
 
+    private void establish_buffer() {
+	if (buffer != null)
+	    return;
+	d = this.size();
+	if (d.width == 0 || d.height == 0)
+	    return;
+	int ss = d.width * d.width + d.height * d.height;
+	r = Math.sqrt(ss) + 1.0;
+	xo = d.width / 2;
+	yo = d.height / 2;
+	buffer = createImage(d.width, d.height);
+	bitmap = buffer.getGraphics();
+    }
+
     public void paint(Graphics g) {
 	debug("Painting");
+	if (buffer == null)
+	    return;
         g.drawImage(buffer, 0, 0, null);
     }
 
     public void update(Graphics g) {
 	debug("Updating");
+	if (buffer == null)
+	    return;
         do_line(theta, bg);
         do_line(theta + lag, fg);
         paint(g);
@@ -164,6 +174,7 @@ public class HypnoMoire extends Applet implements Runnable {
 		status("Interrupted");
 	    }
 	    debug("Repainting");
+	    establish_buffer();
 	    repaint();
         }
     }
